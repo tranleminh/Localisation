@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+
+    <TextView
+        android:id="@+id/tv_steps"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        />
+
+
+    <Button
+        android:id="@+id/btn_start"
+        android:layout_width="118dp"
+        android:layout_height="wrap_content"
+        android:onClick="startChrono"
+        android:text="Start" />
+
+    <Button
+        android:id="@+id/btn_stop"
+        android:layout_width="119dp"
+        android:layout_height="wrap_content"
+        android:onClick="stopChrono"
+        android:text="Stop " />
+
+    <Button
+        android:id="@+id/btn_db"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="startChrono"
+        android:text="View Record" />
+
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center" />
+
+    <Chronometer
+        android:id="@+id/timer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/speed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/log"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:visibility="gone"
+        tools:visibility="gone" />
+
+    <Chronometer
+        android:id="@+id/clk"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:visibility="gone" />
+
+</LinearLayout>
