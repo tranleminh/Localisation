@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
     private static final int REQUEST_LOCATION_PERMISSION = 1;
     private static final String TAG = "";
     private static final String TRACKING_LOCATION_KEY = "LOCATION_KEY";
-    private static final double DISTANCE_THRESHOLD = 25.0;
+    private static final double DISTANCE_THRESHOLD = 53.0;
     private Location[] adrGroup = new Location[1024];
     private int tabIndex = 0;
     private Button BtnStart;
@@ -150,8 +150,8 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
             StringBuffer buffer = new StringBuffer();
             while(data.moveToNext()) {
                 buffer.append("GroupAddress: " + data.getString(0) + "\n");
-                buffer.append("Address: " + data.getString(2) + "\n");
-                buffer.append("Duration: " + time_conv(data.getInt(3)) + "\n");
+                buffer.append("Address: " + data.getString(3) + "\n");
+                buffer.append("Duration: " + time_conv(data.getInt(4)) + "\n");
                 buffer.append("--------------------------------------\n");
             }
             display("All Stored Data:", buffer.toString());
@@ -176,7 +176,10 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
         if (data.getCount() > 0) {
             Toast.makeText(MainActivity.this, "Group table initialized!", Toast.LENGTH_LONG).show();
             while(data.moveToNext()) {
-                adrGroup[tabIndex] = SerializationUtils.deserialize(data.getBlob(1));
+                Location location = new Location("");
+                location.setLongitude(Double.parseDouble(data.getString(1)));
+                location.setLatitude(Double.parseDouble(data.getString(2)));
+                adrGroup[tabIndex] = location;
                 tabIndex++;
             }
         }
@@ -373,7 +376,7 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
                     }
                 } else {
                     Toast.makeText(MainActivity.this, "Update Duration for " + groupResult, Toast.LENGTH_LONG).show();
-                    recordDB.updateData(data.getInt(0), data.getString(2), data.getInt(3) + time, data.getBlob(1));
+                    recordDB.updateData(data.getInt(0), data.getString(3), data.getInt(4) + time, data.getString(1), data.getString(2));
                     //Toast.makeText(MainActivity.this, "This address has id " + data.getString(0) + " and duration of " + data.getInt(2), Toast.LENGTH_LONG).show();
                     //Toast.makeText(MainActivity.this, "This data has id : " + data.getString(0), Toast.LENGTH_LONG).show();
                 }
