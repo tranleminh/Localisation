@@ -7,9 +7,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.location.Location;
 
-import org.apache.commons.lang3.SerializationUtils;
-
-import java.io.Serializable;
 
 import static com.database.RecordTab.Record.COL2;
 import static com.database.RecordTab.Record.COL3;

@@ -10,10 +10,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.view.View;
 import android.widget.Button;
-import android.widget.Chronometer;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,17 +21,16 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
-import org.apache.commons.lang3.SerializationUtils;
-
-import java.io.Serializable;
-import java.sql.Time;
-
 public class MainActivity extends AppCompatActivity implements FetchAddressTask.OnTaskCompleted {
 
+
+    /**********************Global Variable and Attributes Declaration**************************/
+
     private static final int REQUEST_LOCATION_PERMISSION = 1;
-    private static final String TAG = "";
     private static final String TRACKING_LOCATION_KEY = "LOCATION_KEY";
     private static final double DISTANCE_THRESHOLD = 53.0;
+    private static final int LOCATION_PERIOD = 1000;
+    private static final int FASTEST_INTERVAL = 500;
     private Location[] adrGroup = new Location[1024];
     private int tabIndex = 0;
     private Button BtnStart;
@@ -43,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
     private Location mLastLocation;
     private boolean mTrackingLocation = false;
     private boolean changeAdr = true;
-    //private float max = -999999;
     private int groupResult = 0;
     private long timeBase = System.currentTimeMillis();
     private int time = 0;
@@ -62,6 +57,12 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
     private DatabaseHelper recordDB;
 
 
+    /***************Location Tracker's Methods*************************/
+
+    /**
+     * Method that demands user's permission for location tracking, if
+     * there is permission then start tracking location
+     */
     private void startTrackingLocation() {
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -77,6 +78,10 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
         }
     }
 
+    /**
+     * Stop the location tracking by removing the thread on location updates.
+     * Also reverses the Stop button back to Start.
+     */
     private void stopTrackingLocation() {
         if (mTrackingLocation) {
             mTrackingLocation = false;
@@ -86,41 +91,31 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
         }
     }
 
+    /**
+     * Configure a LocationRequest in term of Period, Fastest Interval
+     * and Priority. Currently it is configured to request every 1 sec.
+     * @return a configured location request
+     */
     private LocationRequest getLocationRequest() {
         LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(1000);
-        locationRequest.setFastestInterval(500);
+        locationRequest.setInterval(LOCATION_PERIOD);
+        locationRequest.setFastestInterval(FASTEST_INTERVAL);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         return locationRequest;
     }
 
-    /*private double checkLongitude(double newLong) {
-        if (Math.abs(longitude - newLong) < 0.001) {
-            return longitude;
-        }
-        else {
-            return newLong;
-        }
-    }
+    /**********************Private conversion method***********************/
 
-    private double checkLatitude(double newLat) {
-        if (Math.abs(latitude - newLat) < 0.001) {
-            return latitude;
-        }
-        else {
-            return newLat;
-        }
-    }*/
-
+    /**
+     * Convert a given time in seconds to a format of hours-minutes-seconds
+     * @param time given time in seconds
+     * @return a String containing time in format hours-minutes-seconds
+     */
     private String time_conv(int time) {
         String res = "";
         int s = time;
         int m = 0;
         int h = 0;
-        /*if (s == 0) {
-            res = "1s";
-        }
-        else {*/
         if (s < 60) {
             res += s + "s";
         } else {
@@ -135,10 +130,15 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
                 res += h + "h" + m + "m" + s + "s";
             }
         }
-        //}
         return res;
     }
 
+    /************************Database displaying methods*************************/
+
+    /**
+     * Implements the View Data button's functionality. It queries the
+     * database, appends all data needed for display in a String Buffer then display it.
+     */
     public void viewData() {
         BtnViewData.setOnClickListener(view -> {
             Cursor data = recordDB.showData();
@@ -159,9 +159,11 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
     }
 
 
-    /****************************************************************************************************************************
-     METHOD display() : an auxiliary method used in viewData(). This method creates an alert dialog to show database' stored data.
-     ****************************************************************************************************************************/
+     /**
+     * An auxiliary method used in viewData(). This method creates an alert dialog to show database' stored data.
+     * @param title the title of the alert dialog
+     * @param message the message to be displayed - in our case, the String Buffer containing data.
+     */
     public void display(String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(true);
@@ -170,6 +172,11 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
         builder.show();
     }
 
+    /*********************************Address Group Table's manipulation**************************************/
+
+    /**
+     * Initializes the table with the address group and the location already stored in the database
+     */
     private void initTab() {
         Cursor data = recordDB.showData();
 
@@ -185,29 +192,22 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_LOCATION_PERMISSION:
-                // If the permission is granted, get the location,
-                // otherwise, show a Toast
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startTrackingLocation();
-                } else {
-                    Toast.makeText(this,
-                            "Location permission denied!",
-                            Toast.LENGTH_SHORT).show();
-                }
-                break;
-        }
-    }
-
+    /**
+     * Add a new address group linked with the central location in the table.
+     * The table index is served as group's number.
+     * @param adr the central location to be added in a new address group
+     */
     private void updateAdrGroup(Location adr) {
         adrGroup[tabIndex] = adr;
         tabIndex++;
     }
 
+    /**
+     * When detected a new location, check if this location belongs to
+     * an address group already existed in the table.
+     * @param adr the location to be checked
+     * @return the group's number if the examined location belongs to that group, else return -1
+     */
     private int groupSearch(Location adr) {
         if (tabIndex == 0) {
             Toast.makeText(MainActivity.this, "Group Address Tab empty, first insert at " + (tabIndex + 1), Toast.LENGTH_LONG).show();
@@ -232,6 +232,27 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
         }
     }
 
+
+    /****************************************Android Application Overridden Methods************************************/
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_LOCATION_PERMISSION:
+                // If the permission is granted, get the location,
+                // otherwise, show a Toast
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startTrackingLocation();
+                } else {
+                    Toast.makeText(this,
+                            "Location permission denied!",
+                            Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -247,6 +268,7 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
         mLocationTextView = findViewById(R.id.address);
         Log = findViewById(R.id.log);
 
+        //Initialize address group table
         initTab();
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -274,7 +296,8 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
             if (tabIndex > 1) {
                 for (int i = 0; i < tabIndex; i++) {
                     for (int j = i; j < tabIndex; j++) {
-                        msg += "Distance between group " + (i+1) + " and group " + (j+1) + ": " + adrGroup[i].distanceTo(adrGroup[j]) + "\n";
+                        if (i != j)
+                            msg += "Distance between group " + (i+1) + " and group " + (j+1) + ": " + adrGroup[i].distanceTo(adrGroup[j]) + "\n";
                     }
                 }
             }
@@ -289,7 +312,6 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
                 }
                 if (mLastLocation.distanceTo(old_location) < DISTANCE_THRESHOLD) {
                     mLastLocation = old_location;
-                    //changeAdr = false;
                 }
                 else {
                     if (changeAdr) {
@@ -304,13 +326,7 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
                         old_location = mLastLocation;
                         changeAdr = false;
                     }
-                    //changeAdr = true;
                 }
-                /*if (old_location != null) {
-                    if (mLastLocation.distanceTo(old_location) > max)
-                        max = mLastLocation.distanceTo(old_location);
-                    Log.setText("Maximal distance from same point = " + max);
-                }*/
                 longitude = mLastLocation.getLongitude();
                 latitude = mLastLocation.getLatitude();
                 Log.setText("Current index : " + (tabIndex + 1));
@@ -326,10 +342,6 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
                     Longitude.setText("No location detected");
                     Latitude.setText("No location detected");
                 }
-                /*if (old_location == null || mLastLocation.distanceTo(old_location) < DISTANCE_THRESHOLD) {
-                    old_location = mLastLocation;
-                    changeAdr = true;
-                }*/
             }
         };
         if (savedInstanceState != null) {
@@ -377,11 +389,8 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
                 } else {
                     Toast.makeText(MainActivity.this, "Update Duration for " + groupResult, Toast.LENGTH_LONG).show();
                     recordDB.updateData(data.getInt(0), data.getString(3), data.getInt(4) + time, data.getString(1), data.getString(2));
-                    //Toast.makeText(MainActivity.this, "This address has id " + data.getString(0) + " and duration of " + data.getInt(2), Toast.LENGTH_LONG).show();
-                    //Toast.makeText(MainActivity.this, "This data has id : " + data.getString(0), Toast.LENGTH_LONG).show();
                 }
             }
-            //Log.setText("Address changed from " + adr + " to " + result + " during " + time_conv(time));
             adr = result;
             timeBase = System.currentTimeMillis();
         }
