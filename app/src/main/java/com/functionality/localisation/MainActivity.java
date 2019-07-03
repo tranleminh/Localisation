@@ -333,7 +333,7 @@ public class MainActivity extends AppCompatActivity implements FetchAddressTask.
                 if (mLastLocation != null) {
                     Longitude.setText("Longitude : " + longitude);
                     Latitude.setText("Latitude : " + latitude);
-                    time = (int)((locationResult.getLastLocation().getTime() - timeBase)/1000f);
+                    time = (int)((System.currentTimeMillis() - timeBase)/1000f);
                     Timer.setText("Time : " +time_conv(time));
                     new FetchAddressTask(MainActivity.this, MainActivity.this)
                             .execute(mLastLocation);
