@@ -12,11 +12,5 @@ public final class RecordTab {
         public static final String COL3 = "Latitude";
         public static final String COL4 = "Address";
         public static final String COL5 = "Duration";
-        /*public static final String COL3 = "StartTime";
-        public static final String COL4 = "EndTime";
-        public static final String COL5 = "Steps";
-        public static final String COL6 = "Distance";
-        public static final String COL7 = "Duration";
-        public static final String COL8 = "AvgSpeed";*/
     }
 }
